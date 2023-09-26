@@ -1,0 +1,61 @@
+/* some colors you may find useful:
+  #115ff4
+  #060ce9
+  #28a200
+  #8d2ab5
+  #74119c
+*/
+
+body {
+    background-color: #262826;
+  }
+  
+  tr {
+    width: 20%;
+  }
+  
+  th {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    padding: 2%;
+    font-size: 14px;
+    color: wheat;
+  
+  }
+  
+  table, th, td {
+    border:1px solid #115ff4;
+  }
+  
+  table{
+    table-layout: fixed;
+    width: 67%; 
+    margin-left: 17%;
+  }
+  
+   td{
+    text-align: center;
+    cursor: pointer;
+    padding: 5.7%;
+    font-weight: bolder;
+    color: wheat;
+    background-color: #5a8ff1;
+    height: 15px;
+    width: 456px;
+    overflow: hidden;
+    font-size: 10.8px;
+  }
+  
+  div {
+    height: 15px;
+    max-width: 78px;
+    margin: -60%; 
+    margin-bottom: 80%; 
+    width: fit-content; 
+  }
+  
+  #btn{
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  }
+  
+  
+  
