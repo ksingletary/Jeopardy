@@ -1,0 +1,7 @@
+# Jeopardy
+Jeopardy game using API's!
+
+
+FULL CODE HERE: https://github.com/hatchways-community/jeopardy-b5be5be2f17a41d5aa216b614488fc5b.git
+
+Part of HatchWays Assessment! (Grade: 93)
