@@ -1,193 +1,177 @@
-// categories is the main data structure for the app; it looks like this:
-
-//  [
-//    { title: "Math",
-//      clues: [
-//        {question: "2+2", answer: 4, showing: null},
-//        {question: "1+1", answer: 2, showing: null}
-//        ...
-//      ],
-//    },
-//    { title: "Literature",
-//      clues: [
-//        {question: "Hamlet Author", answer: "Shakespeare", showing: null},
-//        {question: "Bell Jar Author", answer: "Plath", showing: null},
-//        ...
-//      ],
-//    },
-//    ...
-//  ]
-
-let categories = [];
-const $pageBod = $('body');
-
-/** Get NUM_CATEGORIES random category from API.
- *
- * Returns array of category ids
+/**
+ * List to store category IDs.
  */
-// Math.floor(Math.random() * (30 - 25 + 1) + 25)
+let categoriesId = [];
 
+/**
+ * List to store category titles.
+ */
+let categoriesTitle = [];
+
+/**
+ * 2D array to store questions and answers.
+ */
+let qna = [[], [], [], [], [], []];
+
+/**
+ * Asynchronously fetches 6 random categories and stores their IDs and titles.
+ * 
+ */
 async function getCategoryIds() {
-    let idArr = [];
-
-    const res = await axios.get('http://jservice.io/api/categories', {
-        params: {
-            count: 54,
-            offset: Math.floor(Math.random() * (10000 - 25 + 1) + 25)
-        }   
-    })
-    for (let obj of res.data){
-        if (obj.clues_count > 5){
-            idArr.push(obj.id);
-        }
-    }
-    return idArr;
+    let res = await axios.get('https://rithm-jeopardy.herokuapp.com/api/categories', {params: {count: 6}});
+    let resData = res.data;
+    resData.forEach(element => {
+        categoriesId.push(element.id);
+        categoriesTitle.push(element.title);
+    });
 }
 
-/** Return object with data about a category:
- *
- *  Returns { title: "Math", clues: clue-array }
- *
- * Where clue-array is:
- *   [
- *      {question: "Hamlet Author", answer: "Shakespeare", showing: null},
- *      {question: "Bell Jar Author", answer: "Plath", showing: null},
- *      ...
- *   ]
+/**
+ * Asynchronously fetches questions for a given category ID and returns 5 random questions.
+ * @param {number} catId - The ID of the category.
+ * @returns {Promise<Array>} - An array of 5 random questions from the category.
  */
-
 async function getCategory(catId) {
-    let dataObj = {};
+    let insideCat = await axios.get(' https://rithm-jeopardy.herokuapp.com/api/category', {params: {id: catId}});
+    let insideCatData = insideCat.data.clues;
+    let extractCat = insideCatData.map(cats => ({
+        question: cats.question,
+        answer: cats.answer,
+        showing: null
+    }));
 
-    const res = await axios.get('http://jservice.io/api/category', {
-        params: {
-            id: catId
-        }   
-    })
-    for (let obj of res.data.clues){            //removing data we dont need
-        delete obj['id'];
-        delete obj['airdate'];
-        delete obj['category_id'];
-        delete obj['game_id'];
-        delete obj['invalid_count'];
-        delete obj['value'];
-        obj['showing'] = null;
+    const selectedIndices = new Set();
+    while (selectedIndices.size < 5) {
+        const randomIndex = Math.floor(Math.random() * extractCat.length);
+        selectedIndices.add(randomIndex);
     }
-    
-    dataObj['title'] = res.data.title;
-    dataObj['clues'] = [res.data.clues.slice(0, 5)];
 
-    return dataObj;
+    const randomQuestions = [...selectedIndices].map(index => extractCat[index]);
+    return randomQuestions;
 }
 
-
-async function fillCategoriesArr(){
-    const ids = await getCategoryIds();  //array of ids
-    for (let id in ids){
-        const idObj = await getCategory(ids[id]);
-        categories.push(idObj)
-    }
-    
-}
-
-/** Fill the HTML table#jeopardy with the categories & cells for questions.
- * array[Math.floor(Math.random() * array.length)]
- * - The <thead> should be filled w/a <tr>, and a <td> for each category
- * - The <tbody> should be filled w/NUM_QUESTIONS_PER_CAT <tr>s,
- *   each with a question for each category in a <td>
- *   (initally, just show a "?" where the question/answer would go.)
+/**
+ * Fills the table with category titles and empty cells for questions.
  */
-
+const aboveTable = document.getElementById('aboveTable');
+const table = document.getElementById('jeopardy');
 async function fillTable() {
-    await fillCategoriesArr();
-    // console.log(categories);
-    // console.log(categories[0].clues[0]);    
+    let thead = document.createElement("thead");
+    let headerRow = document.createElement("tr");
 
-    const width = 5;
-    const height = 4; //change variable names for cleaner code
 
-    const $table = $('<table>');
-    $table.attr('id', 'jeopardy');
-    const $thead = $('<tr>');
-    for (let x = 0; x <= width; x++) {
-        const $thdata = $('<th>');
-        console.log(categories[x])
-        $thdata.text(Object.values(categories[x])[0]);
-        $thead.prepend($thdata);
-        $table.prepend($thead);
-      }
-      
-    for (let y = 0; y <= height; y++) {
-        const $tbody = $('<tr>');
-  
-        for (let z = 0; z <= width; z++) {
-            const tdata = document.createElement('td');
-            tdata.setAttribute('data-question', Object.values(categories[z].clues[0][y])[1] )
-            tdata.setAttribute('data-answer', Object.values(categories[z].clues[0][y])[0] )
-            tdata.setAttribute('showing', Object.values(categories[z].clues[0][y])[2] )
-            // $tdata.attr('value', Object.values(categories[z].clues[0][y])[1] );
-            // $tdata.text(Object.values(categories[z].clues[0][y])[1]); //some dont have clues?
-            // console.log(tdata)
-            tdata.textContent = '?';  
-            $tbody.prepend(tdata);
+    categoriesTitle.forEach(title => {
+        const th = document.createElement("th");
+        th.innerHTML = title;
+        headerRow.appendChild(th);
+    })
+
+    thead.appendChild(headerRow);
+    aboveTable.appendChild(thead);
+
+    let tbody = document.createElement("tbody");
+    for (let i = 0; i < 5; i++) {
+        const tr = document.createElement("tr");
+        for (let j = 0; j < 6; j++) {
+            const td = document.createElement("td");
+            td.innerText = "?";
+            td.classList.add('null');
+            td.classList.add(`${i}-${j}`);
+
+
+
+            tr.appendChild(td);
         }
-        $table.append($tbody);
+        tbody.appendChild(tr);
     }
-    $pageBod.append($table); 
+    table.appendChild(tbody);
+
+
+
 }
-fillTable();
 
-/** Handle clicking on a clue: show the question or answer.
- *
- * Uses .showing property on clue to determine what to show:
- * - if currently null, show question & set .showing to "question"
- * - if currently "question", show answer & set .showing to "answer"
- * - if currently "answer", ignore click
- * */
 
-$(document).on('click', 'td', function handleClick() {
-    this.innerHTML = '';
-    const textDisplay = document.createElement('div')
-    textDisplay.classList.add('card-text');    
-    console.log(this);
 
-    if(textDisplay.getAttribute('showing') === null) {
-        textDisplay.innerHTML = this.getAttribute('data-question');
-        this.append(textDisplay);
-        this.setAttribute('showing', "question");
-    } 
-    this.addEventListener('click', function(){
-        if (this.getAttribute('showing') === "question") {
-            this.innerHTML = '';
-            this.innerHTML = this.getAttribute('data-answer');
-            this.setAttribute('showing', "answer");
-        } else {
-            return;
+table.addEventListener('click', function (e) {
+
+    const clicked = e.target;
+
+    if (clicked.tagName === "TD") {  
+        
+        const positionClass = Array.from(clicked.classList).find(cls => cls.includes('-'));
+        const [row, col] = positionClass.split('-');
+
+        // const questionObject = qna[col][row];  
+        
+        let qnaCol = qna[col];
+
+        const questionObject = qnaCol[row];
+
+
+         if (clicked.classList.contains('null')) {
+
+            clicked.innerHTML = questionObject.question;
+            clicked.classList.remove('null');
+            clicked.classList.add('question');
+        } 
+         else if (clicked.classList.contains('question')) {
+            clicked.innerHTML = questionObject.answer;
+            clicked.classList.remove('question');
+            clicked.classList.add('answer');
+        } 
+         else if (clicked.classList.contains('answer')) {
+
+
+            clicked.innerText = "?";
+            clicked.classList.remove('answer');
+            clicked.classList.add('null');
         }
-    })    
-})
-const btn = $('<button>');
-$pageBod.append(btn);
-btn.attr('id', 'btn');
-btn.text('Restart');
+    }
+});
 
-btn.on('click', function(){
-    window.location.reload();
-})
-/** Start game:
- *
- * - get random category Ids
- * - get data for each category
- * - create HTML table
- * */
 
+
+const startBtn = document.getElementById('startGame');
+const restartGame = document.getElementById('restart');
+
+startBtn.addEventListener('click', function() {
+    document.getElementById("gameScreen").style.display = "flex";  
+    setupAndStart();  
+   
+    document.getElementById("wholeTable").scrollIntoView({ behavior: 'smooth' });
+});
+
+restartGame.addEventListener('click', function(){
+    categoriesId = [];
+    categoriesTitle = [];
+    qna = [[], [], [], [], [], []];
+    table.innerHTML = '';
+    aboveTable.innerHTML = '';
+    setupAndStart();
+
+
+})
+
+/**
+ * Sets up the game by fetching categories and filling the table.
+ * 
+ */
 async function setupAndStart() {
+    categoriesId = [];
+    categoriesTitle = [];
+    qna = [[], [], [], [], [], []];
+    table.innerHTML = '';
+    aboveTable.innerHTML = '';
+    await getCategoryIds();
+
+    console.log(categoriesId);
+    console.log(categoriesTitle);
+    
+
+    await Promise.all(categoriesId.map(async (num, index) => {
+        qna[index] = await getCategory(num);
+    }));
+
+    console.log(qna);
+    fillTable();
 }
-
-/** On click of start / restart button, set up game. */
-
-// TODO
-
-/** On page load, add event handler for clicking clues */
-
-// TODO
